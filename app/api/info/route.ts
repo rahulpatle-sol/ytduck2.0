@@ -20,7 +20,7 @@ export async function GET(req: Request) {
 
     const info = await ytdl.getInfo(url, {
       requestOptions: {
-        dispatcher: proxyAgent, // ✅ proxy lag gaya
+        agent: proxyAgent, // ✅ ab TS error nahi aayega
         headers: {
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
