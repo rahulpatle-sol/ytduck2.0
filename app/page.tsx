@@ -1,149 +1,211 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { Github } from "lucide-react";
 
 export default function Home() {
   const [url, setUrl] = useState("");
   const [info, setInfo] = useState<any>(null);
+  const [playAudio, setPlayAudio] = useState<string | null>(null);
+  const [playVideo, setPlayVideo] = useState<string | null>(null);
 
-  async function fetchInfo() {
-    const res = await fetch("/api/info", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
-    });
-    const data = await res.json();
-    if (data.error) return alert(data.error);
-    setInfo(data);
-  }
+  const fetchInfo = async () => {
+    try {
+      const res = await fetch("/api/info", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`API error: ${res.status} ${text}`);
+      }
+
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+
+      setInfo(data);
+    } catch (err: any) {
+      console.error("Fetch error:", err);
+      alert(err.message || "Something went wrong");
+    }
+  };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-black via-purple-950 to-black text-white flex flex-col items-center p-6 font-mono">
-      <h1 className="text-5xl font-extrabold text-cyan-400 drop-shadow-[0_0_10px_#00fff2] animate-pulse text-center tracking-wider">
-        🎮 YT Neon Downloader
-      </h1>
-      <p className="mt-3 text-gray-400 text-center text-lg">
-        Stream & Download High-Quality YouTube Audio/Video 🚀
-      </p>
+    <main
+      className="min-h-screen bg-black text-white flex flex-col"
+      style={{
+        backgroundImage: "url('/bg.png')", // retro bg
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      {/* Navbar */}
+      <nav className="w-full px-6 py-4 flex justify-between items-center bg-black/70 border-b border-cyan-400 backdrop-blur-md">
+        <h1 className="text-2xl font-bold text-cyan-300 drop-shadow-[0_0_10px_#00fff2]">
+          ⚡ YMusic Gaming Edition
+        </h1>
+        <div className="flex gap-6 items-center">
+          <Link
+            href="https://github.com/rahulpatle-sol"
+            target="_blank"
+            className="flex items-center gap-2 text-pink-400 hover:text-cyan-300 transition"
+          >
+            <Github className="w-5 h-5" />
+            GitHub
+          </Link>
+          <Link
+            href="https://github.com/rahulpatle-sol/ytduck2.0.git"
+            target="_blank"
+            className="text-yellow-300 hover:text-cyan-300 transition"
+          >
+            Source Code
+          </Link>
+        </div>
+      </nav>
 
-      {/* Input */}
-      <div className="mt-6 flex w-full max-w-xl neon-border">
-        <input
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="Paste YouTube link..."
-          className="flex-1 px-4 py-3 rounded-l-xl bg-black/60 border border-cyan-500 text-cyan-300 focus:outline-none backdrop-blur-lg"
-        />
-        <button
-          onClick={fetchInfo}
-          className="px-6 py-3 bg-cyan-500 text-black font-bold rounded-r-xl hover:bg-cyan-400 transition-transform hover:scale-105"
-        >
-          🚀 Fetch
-        </button>
-      </div>
+      {/* Hero */}
+      <section className="flex flex-col items-center text-center mt-12 px-4">
+        <h1 className="text-5xl font-extrabold text-cyan-400 drop-shadow-[0_0_20px_#00fff2] animate-pulse font-['Protest_Guerrilla']">
+          🦆 YT DUCK <span>2.0</span>
+        </h1>
+        <p className="mt-4 text-pink-400 text-lg drop-shadow-[0_0_10px_#ff00ff]">
+          🚀 Stream & Download in Arcade Gaming Style
+        </p>
+
+        {/* Input */}
+        <div className="mt-8 flex w-full max-w-2xl border-4 border-pink-500 shadow-[4px_4px_0px_#ff00ff] rounded-xl overflow-hidden">
+          <input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="🎮 Enter YouTube URL..."
+            className="flex-1 px-4 py-3 bg-black text-green-400 outline-none text-sm tracking-widest placeholder-pink-600"
+          />
+          <button
+            onClick={fetchInfo}
+            className="px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-black font-bold hover:scale-110 transition-transform shadow-[4px_4px_0px_#00fff2]"
+          >
+            🎯 Get Formats
+          </button>
+        </div>
+      </section>
 
       {/* Results */}
       {info && (
-        <div className="mt-10 bg-black/50 backdrop-blur-xl border border-purple-700/50 p-6 rounded-2xl shadow-[0_0_20px_#6b21a8] w-full max-w-6xl animate-fadeIn">
-          <h2 className="text-2xl font-bold text-purple-300 text-center drop-shadow-[0_0_5px_#a855f7]">
+        <div className="mt-12 bg-black/80 border-4 border-cyan-400 p-6 rounded-2xl shadow-[8px_8px_0px_#00fff2] w-full max-w-6xl mx-auto backdrop-blur-md">
+          <h2 className="text-2xl font-bold text-yellow-300 text-center drop-shadow-[0_0_15px_#ffff00]">
             {info.title}
           </h2>
           <img
             src={info.thumbnail}
             alt="thumbnail"
-            className="mt-4 w-80 rounded-xl shadow-lg mx-auto animate-glow"
+            className="mt-5 w-80 rounded-xl shadow-[0_0_20px_#ff00ff] mx-auto"
           />
 
-          {/* Grid layout */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* 🎬 Video Section */}
-            <div className="bg-gradient-to-br from-purple-900/60 to-purple-700/30 p-5 rounded-xl shadow-lg neon-card">
-              <h3 className="text-lg font-bold text-cyan-300 mb-4 text-center">
-                🎬 Video + Audio (144p → 4K)
+          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-10">
+            {/* Video Section */}
+            <div className="bg-gradient-to-br from-purple-900/80 to-purple-700/30 p-6 rounded-xl shadow-[6px_6px_0px_#9333ea] border-2 border-purple-400">
+              <h3 className="text-lg font-bold text-cyan-300 mb-5 text-center drop-shadow-[0_0_5px_#00fff2]">
+                🎬 Video Formats (144p → 4K)
               </h3>
               <div className="flex flex-col gap-3">
-                {(info.videoFormats||[]).map((v: any) => (
-                  <button
-                    key={v.itag}
-                    onClick={() =>
-                      window.open(
-                        `/api/download/video?url=${encodeURIComponent(
-                          url
-                        )}&itag=${v.itag}`,
-                        "_blank"
-                      )
-                    }
-                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-110 transition font-semibold shadow-[0_0_10px_#9333ea]"
-                  >
-                    🎥 {v.quality} ({v.size})
-                  </button>
-                ))}
-
-                <button
-                  onClick={() =>
-                    (document.getElementById(
-                      "videoPlayer"
-                    )!.src = `/api/stream/video?url=${encodeURIComponent(
-                      url
-                    )}&itag=${info.videoFormats[0].itag}`)
-                  }
-                  className="px-4 py-2 mt-4 bg-blue-500 rounded-lg hover:bg-blue-400 transition font-semibold shadow-[0_0_10px_#3b82f6]"
-                >
-                  ▶️ Play Video
-                </button>
-                <video
-                  id="videoPlayer"
-                  controls
-                  className="mt-3 w-full rounded-lg shadow-xl"
-                ></video>
+                {info.videoFormats.length > 0 ? (
+                  info.videoFormats.map((v: any, idx: number) => (
+                    <div key={v.itag || idx} className="flex gap-2">
+                      <a
+                        href={v.url}
+                        target="_blank"
+                        className="flex-1 px-3 py-2 rounded bg-purple-700 hover:bg-purple-500 text-white font-semibold shadow-md text-center"
+                      >
+                        ⬇️ {v.qualityLabel} ({v.container})
+                      </a>
+                      <button
+                        onClick={() => setPlayVideo(v.url)}
+                        className="px-3 py-2 bg-cyan-500 hover:bg-cyan-400 rounded font-semibold"
+                      >
+                        ▶️ Play
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-400">No video formats found</p>
+                )}
               </div>
+              {playVideo && (
+                <video
+                  src={playVideo}
+                  controls
+                  autoPlay
+                  className="mt-4 w-full rounded-lg border-2 border-cyan-400 shadow-[0_0_20px_#00fff2]"
+                />
+              )}
             </div>
 
-            {/* 🎵 Audio Section */}
-            <div className="bg-gradient-to-br from-cyan-900/60 to-cyan-700/30 p-5 rounded-xl shadow-lg neon-card">
-              <h3 className="text-lg font-bold text-purple-300 mb-4 text-center">
-                🎵 Audio Only (upto 320 kbps)
+            {/* Audio Section */}
+            <div className="bg-gradient-to-br from-cyan-900/80 to-cyan-700/30 p-6 rounded-xl shadow-[6px_6px_0px_#22c55e] border-2 border-green-400">
+              <h3 className="text-lg font-bold text-pink-300 mb-5 text-center drop-shadow-[0_0_5px_#ff00ff]">
+                🎵 Audio Formats (upto 320 kbps)
               </h3>
               <div className="flex flex-col gap-3">
-                {info.audioFormats.map((a: any) => (
-                  <button
-                    key={a.itag}
-                    onClick={() =>
-                      window.open(
-                        `/api/download/audio?url=${encodeURIComponent(
-                          url
-                        )}&itag=${a.itag}`,
-                        "_blank"
-                      )
-                    }
-                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 hover:scale-110 transition font-semibold shadow-[0_0_10px_#06b6d4]"
-                  >
-                    🎧 {a.bitrate} ({a.size})
-                  </button>
-                ))}
-
-                <button
-                  onClick={() =>
-                    (document.getElementById(
-                      "audioPlayer"
-                    )!.src = `/api/stream/audio?url=${encodeURIComponent(
-                      url
-                    )}&itag=${info.audioFormats[0].itag}`)
-                  }
-                  className="px-4 py-2 mt-4 bg-green-500 rounded-lg hover:bg-green-400 transition font-semibold shadow-[0_0_10px_#22c55e]"
-                >
-                  ▶️ Play Audio
-                </button>
-                <audio
-                  id="audioPlayer"
-                  controls
-                  className="mt-3 w-full"
-                ></audio>
+                {info.audioFormats.length > 0 ? (
+                  info.audioFormats.map((a: any, idx: number) => (
+                    <div key={a.itag || idx} className="flex gap-2">
+                      <a
+                        href={a.url}
+                        target="_blank"
+                        className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-green-400 to-yellow-500 hover:scale-110 transition font-semibold shadow-[4px_4px_0px_#22c55e] text-center"
+                      >
+                        ⬇️ {a.audioCodec} ({a.size})
+                      </a>
+                      <button
+                        onClick={() => setPlayAudio(a.url)}
+                        className="px-3 py-2 bg-pink-500 hover:bg-pink-400 rounded font-semibold"
+                      >
+                        ▶️ Play
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-400">No audio formats found</p>
+                )}
               </div>
+              {playAudio && (
+                <audio
+                  src={playAudio}
+                  controls
+                  autoPlay
+                  className="mt-4 w-full border-2 border-green-400 shadow-[0_0_20px_#22c55e] rounded-lg"
+                />
+              )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="mt-auto py-6 text-center text-sm text-gray-400 bg-black/70 border-t border-cyan-400">
+        ⚡ Built with ❤️ for Gamers |{" "}
+        <Link
+          href="https://github.com/rahulpatle-sol"
+          target="_blank"
+          className="text-pink-400 hover:text-cyan-300"
+        >
+          GitHub
+        </Link>{" "}
+        |{" "}
+        <Link
+          href="https://github.com/rahulpatle-sol/ytduck2.0.git"
+          target="_blank"
+          className="text-yellow-300 hover:text-cyan-300"
+        >
+          Source Code
+        </Link>
+      </footer>
     </main>
   );
 }
