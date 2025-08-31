@@ -5,7 +5,8 @@ const nextConfig: NextConfig = {
 
 
     eslint: {
-    ignoreDuringBuilds: true, // ✅ disables eslint check in render build
+    ignoreDuringBuilds: true, 
+    // ✅ disables eslint check in render build
   },
 };
 
