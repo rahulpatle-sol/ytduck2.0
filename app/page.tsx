@@ -29,7 +29,20 @@ export default function Home() {
         return;
       }
 
-      setInfo(data);
+      // Separate audio & video formats here
+      const audioFormats = data.formats?.filter((f: any) =>
+        f.mimeType?.includes("audio/")
+      ) || [];
+      const videoFormats = data.formats?.filter((f: any) =>
+        f.mimeType?.includes("video/")
+      ) || [];
+
+      setInfo({
+        title: data.title,
+        thumbnail: data.thumbnails?.[data.thumbnails.length - 1]?.url || "",
+        audioFormats,
+        videoFormats,
+      });
     } catch (err: any) {
       console.error("Fetch error:", err);
       alert(err.message || "Something went wrong");
@@ -40,7 +53,7 @@ export default function Home() {
     <main
       className="min-h-screen bg-black text-white flex flex-col"
       style={{
-        backgroundImage: "url('/bg.png')", // retro bg
+        backgroundImage: "url('/bg.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -101,11 +114,13 @@ export default function Home() {
           <h2 className="text-2xl font-bold text-yellow-300 text-center drop-shadow-[0_0_15px_#ffff00]">
             {info.title}
           </h2>
-          <img
-            src={info.thumbnail}
-            alt="thumbnail"
-            className="mt-5 w-80 rounded-xl shadow-[0_0_20px_#ff00ff] mx-auto"
-          />
+          {info.thumbnail && (
+            <img
+              src={info.thumbnail}
+              alt="thumbnail"
+              className="mt-5 w-80 rounded-xl shadow-[0_0_20px_#ff00ff] mx-auto"
+            />
+          )}
 
           <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-10">
             {/* Video Section */}
@@ -114,7 +129,7 @@ export default function Home() {
                 🎬 Video Formats (144p → 4K)
               </h3>
               <div className="flex flex-col gap-3">
-                {info.videoFormats.length > 0 ? (
+                {info.videoFormats?.length > 0 ? (
                   info.videoFormats.map((v: any, idx: number) => (
                     <div key={v.itag || idx} className="flex gap-2">
                       <a
@@ -122,7 +137,7 @@ export default function Home() {
                         target="_blank"
                         className="flex-1 px-3 py-2 rounded bg-purple-700 hover:bg-purple-500 text-white font-semibold shadow-md text-center"
                       >
-                        ⬇️ {v.qualityLabel} ({v.container})
+                        ⬇️ {v.qualityLabel || "Unknown"} ({v.container || "mp4"})
                       </a>
                       <button
                         onClick={() => setPlayVideo(v.url)}
@@ -152,7 +167,7 @@ export default function Home() {
                 🎵 Audio Formats (upto 320 kbps)
               </h3>
               <div className="flex flex-col gap-3">
-                {info.audioFormats.length > 0 ? (
+                {info.audioFormats?.length > 0 ? (
                   info.audioFormats.map((a: any, idx: number) => (
                     <div key={a.itag || idx} className="flex gap-2">
                       <a
@@ -160,7 +175,7 @@ export default function Home() {
                         target="_blank"
                         className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-green-400 to-yellow-500 hover:scale-110 transition font-semibold shadow-[4px_4px_0px_#22c55e] text-center"
                       >
-                        ⬇️ {a.audioCodec} ({a.size})
+                        ⬇️ {a.audioCodec || "Audio"} ({a.bitrate || "N/A"} kbps)
                       </a>
                       <button
                         onClick={() => setPlayAudio(a.url)}

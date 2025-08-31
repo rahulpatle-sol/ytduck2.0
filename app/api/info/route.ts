@@ -2,46 +2,30 @@ import { NextResponse } from "next/server";
 import ytdl from "@distube/ytdl-core";
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const url = body.url;
-
-  if (!url) {
-    return NextResponse.json({ error: "URL required" }, { status: 400 });
-  }
-
   try {
-    const info = await ytdl.getInfo(url);
+    const { url } = await req.json();
 
-    // 🎬 Video + Audio (muxed)
-    const videoFormats = info.formats
-      .filter((f) => f.hasVideo && f.hasAudio && f.qualityLabel)
-      .sort((a, b) => {
-        const qa = parseInt(a.qualityLabel) || 0;
-        const qb = parseInt(b.qualityLabel) || 0;
-        return qb - qa;
-      });
+    if (!ytdl.validateURL(url)) {
+      return NextResponse.json({ error: "Invalid YouTube URL" }, { status: 400 });
+    }
 
-    // 🎵 Audio only
-    const audioFormats = info.formats
-      .filter((f) => f.hasAudio && !f.hasVideo)
-      .map((f) => ({
-        itag: f.itag,
-        mimeType: f.mimeType,
-        audioCodec: f.audioCodec,
-        bitrate: f.bitrate,
-        url: f.url,
-        size: f.contentLength
-          ? (Number(f.contentLength) / 1024 / 1024).toFixed(1) + " MB"
-          : "N/A",
-      }));
+    const info = await ytdl.getInfo(url, {
+      requestOptions: {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+          "Accept-Language": "en-US,en;q=0.9",
+        },
+      },
+    });
 
     return NextResponse.json({
       title: info.videoDetails.title,
-      thumbnail: info.videoDetails.thumbnails.at(-1)?.url,
-      videoFormats,
-      audioFormats,
+      lengthSeconds: info.videoDetails.lengthSeconds,
+      thumbnails: info.videoDetails.thumbnails,
+      formats: info.formats,
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (error: any) {
+    console.error("Info Error:", error);
+    return NextResponse.json({ error: "Failed to fetch video info" }, { status: 500 });
   }
 }
