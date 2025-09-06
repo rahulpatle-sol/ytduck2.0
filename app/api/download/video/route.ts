@@ -1,29 +1,41 @@
 import { NextResponse } from "next/server";
 import ytdl from "@distube/ytdl-core";
-
+import ffmpegPath from "ffmpeg-static";
+import { spawn } from "child_process";
 
 export async function POST(req: Request) {
   try {
-    const { url } = await req.json();
+    const { url, itagVideo, itagAudio } = await req.json();
 
-    if (!ytdl.validateURL(url)) {
-      return NextResponse.json({ error: "Invalid YouTube URL" }, { status: 400 });
+    if (!url || !itagVideo || !itagAudio) {
+      return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
     }
 
-    const info = await ytdl.getInfo(url, {
-      requestOptions: {
-        headers: {
-          "User-Agent": "Mozilla/5.0",
-          "Accept-Language": "en-US,en;q=0.9",
-        },
-      },
+    const videoStream = ytdl(url, { quality: itagVideo });
+    const audioStream = ytdl(url, { quality: itagAudio });
+
+    const ffmpeg = spawn(ffmpegPath!, [
+      "-i", "pipe:3", // audio
+      "-i", "pipe:4", // video
+      "-c:v", "copy",
+      "-c:a", "aac",
+      "-f", "mp4",
+      "pipe:1"
+    ], {
+      stdio: ["pipe", "pipe", "pipe", "pipe", "pipe"]
     });
 
-    const videoFormats = info.formats.filter((f) => f.mimeType?.includes("video/"));
+    audioStream.pipe(ffmpeg.stdio[3]);
+    videoStream.pipe(ffmpeg.stdio[4]);
 
-    return NextResponse.json({ videoFormats });
-  } catch (error: any) {
-    console.error("Video Error:", error);
-    return NextResponse.json({ error: "Failed to fetch video formats" }, { status: 500 });
+    return new Response(ffmpeg.stdout, {
+      headers: {
+        "Content-Type": "video/mp4",
+        "Content-Disposition": `attachment; filename="merged.mp4"`
+      }
+    });
+  } catch (err: any) {
+    console.error("FFmpeg merge error:", err.message);
+    return NextResponse.json({ error: "Merge failed", details: err.message }, { status: 500 });
   }
 }

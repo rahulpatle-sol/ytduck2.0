@@ -9,6 +9,40 @@ export default function Home() {
   const [info, setInfo] = useState<any>(null);
   const [playAudio, setPlayAudio] = useState<string | null>(null);
   const [playVideo, setPlayVideo] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
+const [downloadMessage, setDownloadMessage] = useState("");
+const downloadMedia = async (itag: string, type: "audio" | "video") => {
+  try {
+    setDownloading(true);
+    setDownloadMessage(type === "audio" ? "🎧 Downloading audio..." : "📽️ Downloading video...");
+
+    const res = await fetch(`/api/download/${type}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, itag }),
+    });
+
+    if (!res.ok) throw new Error("Download failed");
+
+    const blob = await res.blob();
+    const downloadUrl = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = `${info.title || type}.${type === "audio" ? "mp3" : "mp4"}`;
+    a.click();
+
+    setDownloadMessage("✅ Download complete!");
+  } catch (err) {
+    console.error("Download error:", err);
+    setDownloadMessage("❌ Failed to download");
+  } finally {
+    setDownloading(false);
+    setTimeout(() => setDownloadMessage(""), 4000);
+  }
+};
+
+
 
   const fetchInfo = async () => {
     try {
@@ -132,13 +166,13 @@ export default function Home() {
                 {info.videoFormats?.length > 0 ? (
                   info.videoFormats.map((v: any, idx: number) => (
                     <div key={v.itag || idx} className="flex gap-2">
-                      <a
-                        href={v.url}
-                        target="_blank"
-                        className="flex-1 px-3 py-2 rounded bg-purple-700 hover:bg-purple-500 text-white font-semibold shadow-md text-center"
-                      >
-                        ⬇️ {v.qualityLabel || "Unknown"} ({v.container || "mp4"})
-                      </a>
+                   <button
+  onClick={() => downloadMedia(v.itag, "video")}
+  className="flex-1 px-3 py-2 rounded bg-purple-700 hover:bg-purple-500 text-white font-semibold shadow-md text-center"
+>
+  ⬇️ {v.qualityLabel || "Unknown"} ({v.container || "mp4"})
+</button>
+
                       <button
                         onClick={() => setPlayVideo(v.url)}
                         className="px-3 py-2 bg-cyan-500 hover:bg-cyan-400 rounded font-semibold"
@@ -161,6 +195,7 @@ export default function Home() {
               )}
             </div>
 
+
             {/* Audio Section */}
             <div className="bg-gradient-to-br from-cyan-900/80 to-cyan-700/30 p-6 rounded-xl shadow-[6px_6px_0px_#22c55e] border-2 border-green-400">
               <h3 className="text-lg font-bold text-pink-300 mb-5 text-center drop-shadow-[0_0_5px_#ff00ff]">
@@ -170,13 +205,13 @@ export default function Home() {
                 {info.audioFormats?.length > 0 ? (
                   info.audioFormats.map((a: any, idx: number) => (
                     <div key={a.itag || idx} className="flex gap-2">
-                      <a
-                        href={a.url}
-                        target="_blank"
-                        className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-green-400 to-yellow-500 hover:scale-110 transition font-semibold shadow-[4px_4px_0px_#22c55e] text-center"
-                      >
-                        ⬇️ {a.audioCodec || "Audio"} ({a.bitrate || "N/A"} kbps)
-                      </a>
+                  <button
+  onClick={() => downloadMedia(a.itag, "audio")}
+  className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-green-400 to-yellow-500 hover:scale-110 transition font-semibold shadow-[4px_4px_0px_#22c55e] text-center"
+>
+  ⬇️ {a.audioCodec || "Audio"} ({a.bitrate || "N/A"} kbps)
+</button>
+
                       <button
                         onClick={() => setPlayAudio(a.url)}
                         className="px-3 py-2 bg-pink-500 hover:bg-pink-400 rounded font-semibold"
@@ -199,6 +234,11 @@ export default function Home() {
               )}
             </div>
           </div>
+          {downloading && (
+  <p className="mt-6 text-center text-cyan-300 animate-pulse font-bold text-lg">
+    {downloadMessage}
+  </p>
+)}
         </div>
       )}
 
